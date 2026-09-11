@@ -1,0 +1,7 @@
+configuration:
+  mesh_node_token:
+    name: Mesh node token
+    description: Token generated for this Mesh node in the Cloudflare dashboard.
+  srcnat_enabled:
+    name: Enable source NAT
+    description: Apply source NAT to traffic forwarded by the Mesh connector.
