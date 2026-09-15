@@ -2,14 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"syscall"
 )
-
-const cloudflareDataPath = "/var/lib/cloudflare-warp"
 
 type options struct {
 	MeshNodeToken string `json:"mesh_node_token"`
@@ -26,10 +23,6 @@ func main() {
 		fatal("mesh_node_token must be configured before the app can start")
 	}
 
-	if err := enableForwarding(); err != nil {
-		fatal("Unable to enable IP forwarding: %v", err)
-	}
-
 	setEnvironment("MESH_NODE_TOKEN", config.MeshNodeToken)
 	setEnvironment("SRCNAT_ENABLED", fmt.Sprintf("%t", config.SrcnatEnabled))
 
@@ -40,43 +33,15 @@ func main() {
 }
 
 func readOptions() (options, error) {
-	paths := []string{
-		"/data/options.json",
-		cloudflareDataPath + "/options.json",
-	}
-
 	var config options
-	for _, path := range paths {
-		contents, err := os.ReadFile(path)
-		if errors.Is(err, os.ErrNotExist) {
-			continue
-		}
-		if err != nil {
-			return config, err
-		}
-		if err := json.Unmarshal(contents, &config); err != nil {
-			return config, err
-		}
-		return config, nil
+	contents, err := os.ReadFile("/data/options.json")
+	if err != nil {
+		return config, fmt.Errorf("failed to read /data/options.json: %w", err)
 	}
-
-	return config, errors.New("options.json was not found")
-}
-
-func enableForwarding() error {
-	paths := []string{
-		"/proc/sys/net/ipv4/ip_forward",
-		"/proc/sys/net/ipv6/conf/all/forwarding",
-		"/proc/sys/net/ipv6/conf/default/forwarding",
+	if err := json.Unmarshal(contents, &config); err != nil {
+		return config, fmt.Errorf("failed to parse JSON: %w", err)
 	}
-
-	for _, path := range paths {
-		if err := os.WriteFile(path, []byte("1\n"), 0o644); err != nil {
-			return fmt.Errorf("%s: %w", path, err)
-		}
-	}
-
-	return nil
+	return config, nil
 }
 
 func setEnvironment(key, value string) {

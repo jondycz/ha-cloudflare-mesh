@@ -1,0 +1,14 @@
+#include <tunables/global>
+
+profile cloudflare-mesh flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # Allow standard file access (restricted by standard Linux permissions)
+  file,
+
+  # Allow process signals
+  signal (send) set=(kill,term,int,hup,cont),
+
+  # Allow explicit read/write access to the tun device
+  /dev/net/tun rw,
+}
