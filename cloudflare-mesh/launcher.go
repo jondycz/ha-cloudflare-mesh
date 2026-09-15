@@ -34,9 +34,9 @@ func main() {
 
 func readOptions() (options, error) {
 	var config options
-	contents, err := os.ReadFile("/data/options.json")
+	contents, err := os.ReadFile("/var/lib/cloudflare-warp/options.json")
 	if err != nil {
-		return config, fmt.Errorf("failed to read /data/options.json: %w", err)
+		return config, fmt.Errorf("failed to read /var/lib/cloudflare-warp/options.json: %w", err)
 	}
 	if err := json.Unmarshal(contents, &config); err != nil {
 		return config, fmt.Errorf("failed to parse JSON: %w", err)
