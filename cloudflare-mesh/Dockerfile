@@ -8,6 +8,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH="${TARGETARCH}" go build -trimpath -ldflags=
 
 FROM cloudflare/mesh:latest
 
+USER root
+# Install iptables (trying both apk and apt-get to be safe against base image changes)
+RUN (apt-get update && apt-get install -y iptables) || apk add --no-cache iptables
+
 ARG BUILD_VERSION
 ARG TARGETARCH
 
