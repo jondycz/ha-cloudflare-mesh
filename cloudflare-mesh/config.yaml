@@ -1,5 +1,5 @@
 name: Cloudflare Mesh
-version: 1.0.4
+version: 1.0.5
 slug: cloudflare-mesh
 description: Run a Cloudflare One Mesh connector on Home Assistant.
 image: ghcr.io/jondycz/ha-cloudflare-mesh
@@ -10,7 +10,6 @@ init: false
 arch:
   - aarch64
   - amd64
-full_access: true
 devices:
   - /dev/net/tun
 privileged:

@@ -24,7 +24,7 @@ func main() {
 	}
 
 	if err := enableForwarding(); err != nil {
-		fatal("Unable to enable IP forwarding: %v", err)
+		fmt.Fprintf(os.Stderr, "[WARNING] Unable to enable IP forwarding (HAOS blocks this by design): %v\n", err)
 	}
 
 	setEnvironment("MESH_NODE_TOKEN", config.MeshNodeToken)
