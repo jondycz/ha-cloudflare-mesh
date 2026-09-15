@@ -23,6 +23,10 @@ func main() {
 		fatal("mesh_node_token must be configured before the app can start")
 	}
 
+	if err := enableForwarding(); err != nil {
+		fatal("Unable to enable IP forwarding: %v", err)
+	}
+
 	setEnvironment("MESH_NODE_TOKEN", config.MeshNodeToken)
 	setEnvironment("SRCNAT_ENABLED", fmt.Sprintf("%t", config.SrcnatEnabled))
 
@@ -42,6 +46,22 @@ func readOptions() (options, error) {
 		return config, fmt.Errorf("failed to parse JSON: %w", err)
 	}
 	return config, nil
+}
+
+func enableForwarding() error {
+	paths := []string{
+		"/proc/sys/net/ipv4/ip_forward",
+		"/proc/sys/net/ipv6/conf/all/forwarding",
+		"/proc/sys/net/ipv6/conf/default/forwarding",
+	}
+
+	for _, path := range paths {
+		if err := os.WriteFile(path, []byte("1\n"), 0o644); err != nil {
+			return fmt.Errorf("%s: %w", path, err)
+		}
+	}
+
+	return nil
 }
 
 func setEnvironment(key, value string) {
