@@ -17,9 +17,7 @@ if [ -z "$(printf '%s' "$MESH_NODE_TOKEN" | tr -d '[:space:]')" ]; then
     exit 1
 fi
 
-if [ -z "$SRCNAT_ENABLED" ]; then
-    SRCNAT_ENABLED="false"
-fi
+[ -n "$SRCNAT_ENABLED" ] || SRCNAT_ENABLED="false"
 
 export MESH_NODE_TOKEN
 export SRCNAT_ENABLED
