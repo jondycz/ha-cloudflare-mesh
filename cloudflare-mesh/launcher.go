@@ -27,12 +27,15 @@ func main() {
 	setEnvironment("MESH_NODE_TOKEN", config.MeshNodeToken)
 	setEnvironment("SRCNAT_ENABLED", fmt.Sprintf("%t", config.SrcnatEnabled))
 
-	fmt.Println("[INFO] Adding iptables FORWARD rules for tun0")
-	if err := exec.Command("iptables", "-I", "FORWARD", "-i", "tun0", "-j", "ACCEPT").Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "[WARNING] Failed to add iptables FORWARD -i rule: %v\n", err)
-	}
-	if err := exec.Command("iptables", "-I", "FORWARD", "-o", "tun0", "-j", "ACCEPT").Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "[WARNING] Failed to add iptables FORWARD -o rule: %v\n", err)
+	fmt.Println("[INFO] Adding iptables FORWARD rules for Cloudflare interfaces")
+	interfaces := []string{"tun+", "wgcf+", "cloudflare+"}
+	for _, iface := range interfaces {
+		if err := exec.Command("iptables", "-I", "FORWARD", "-i", iface, "-j", "ACCEPT").Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "[WARNING] Failed to add iptables FORWARD -i rule for %s: %v\n", iface, err)
+		}
+		if err := exec.Command("iptables", "-I", "FORWARD", "-o", iface, "-j", "ACCEPT").Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "[WARNING] Failed to add iptables FORWARD -o rule for %s: %v\n", iface, err)
+		}
 	}
 
 	fmt.Println("[INFO] Starting Cloudflare Mesh")
