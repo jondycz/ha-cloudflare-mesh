@@ -9,23 +9,23 @@ if [ ! -f "$OPTIONS_FILE" ]; then
     exit 1
 fi
 
-MESH_NODE_TOKEN="$(jq -r '.mesh_node_token // empty' "$OPTIONS_FILE")"
-SRCNAT_ENABLED="$(jq -r '.srcnat_enabled // false' "$OPTIONS_FILE")"
+MESH_NODE_TOKEN="$(sed -n 's/.*"mesh_node_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$OPTIONS_FILE")"
+SRCNAT_ENABLED="$(sed -n 's/.*"srcnat_enabled"[[:space:]]*:[[:space:]]*\(true\|false\).*/\1/p' "$OPTIONS_FILE")"
 
 if [ -z "$(printf '%s' "$MESH_NODE_TOKEN" | tr -d '[:space:]')" ]; then
     echo "[ERROR] mesh_node_token must be configured before the app can start" >&2
     exit 1
 fi
 
+if [ -z "$SRCNAT_ENABLED" ]; then
+    SRCNAT_ENABLED="false"
+fi
+
 export MESH_NODE_TOKEN
 export SRCNAT_ENABLED
-
-echo "[INFO] Enabling IP forwarding"
 
 sysctl -w net.ipv4.ip_forward=1
 sysctl -w net.ipv6.conf.all.forwarding=1
 sysctl -w net.ipv6.conf.default.forwarding=1
-
-echo "[INFO] Starting Cloudflare Mesh"
 
 exec /entrypoint

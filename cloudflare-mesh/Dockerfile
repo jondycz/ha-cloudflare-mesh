@@ -2,9 +2,6 @@ FROM cloudflare/mesh:latest
 
 USER root
 
-# Install jq
-RUN (apt-get update && apt-get install -y jq) || apk add --no-cache jq
-
 ARG BUILD_VERSION
 ARG TARGETARCH
 
