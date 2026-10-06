@@ -1,0 +1,62 @@
+#include <tunables/global>
+
+profile cloudflare-mesh flags=(attach_disconnected,mediate_deleted,complain) {
+  #include <abstractions/base>
+
+  # Requested in config.yaml
+  capability net_admin,
+  capability net_raw,
+
+  # warp-svc DNS proxy listens on port 53
+  capability net_bind_service,
+
+  # dbus-daemon drops to the "messagebus" user (/etc/dbus-1/system.conf)
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  capability audit_write,
+  capability chown,
+  capability dac_override,
+
+  network inet,
+  network inet6,
+  network netlink,
+  network packet,
+  network unix,
+
+  # Launched by Home Assistant, then /entrypoint -> nft, dbus-daemon, warp-svc, warp-cli
+  /entrypoint.sh rix,
+  /entrypoint rix,
+  /{usr/,}bin/busybox rix,
+  /usr/bin/nft rix,
+  /usr/bin/dbus-daemon rix,
+  /usr/bin/warp-svc rix,
+  /usr/bin/warp-cli rix,
+  /init.nft r,
+
+  /usr/lib/** mr,
+  /usr/share/** r,
+  /etc/{,**} r,
+
+  # warp-svc rewrites resolv.conf in Traffic and DNS mode
+  /etc/resolv.conf* rwk,
+
+  # TUN device
+  /dev/net/tun rw,
+
+  # Connector state (mapped by Home Assistant, includes options.json)
+  /var/lib/cloudflare-warp/{,**} rwk,
+  /var/lib/dbus/{,**} rwk,
+
+  # dbus and warp-svc sockets, /run/cid
+  /run/{,**} rwk,
+  /tmp/{,**} rwk,
+  /var/tmp/{,**} rwk,
+
+  # warp-svc diagnostics and posture checks
+  @{PROC}/{,**} r,
+  /sys/class/{,**} r,
+  /sys/devices/{,**} r,
+  /sys/block/{,**} r,
+  /sys/fs/cgroup/{,**} r,
+}
