@@ -1,4 +1,4 @@
-FROM cloudflare/mesh:latest
+FROM cloudflare/mesh:2026.7.0
 
 USER root
 
