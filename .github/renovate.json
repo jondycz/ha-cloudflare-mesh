@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "enabledManagers": [
+    "dockerfile"
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "cloudflare/mesh"
+      ],
+      "groupName": "Cloudflare Mesh",
+      "commitMessageTopic": "Cloudflare Mesh base image",
+      "semanticCommitType": "build"
+    }
+  ],
+  "labels": [
+    "dependencies"
+  ]
+}

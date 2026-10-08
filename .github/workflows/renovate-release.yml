@@ -1,0 +1,99 @@
+name: Update Renovate release metadata
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Find Renovate PRs
+        id: renovate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr list \
+            --state open \
+            --author "app/renovate" \
+            --json number,headRefName,headRepositoryOwner,headRepository \
+            --jq '.[] | @base64' > renovate-prs.txt
+
+      - name: Process Renovate PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          while IFS= read -r encoded; do
+            [ -z "$encoded" ] && continue
+
+            pr="$(printf '%s' "$encoded" | base64 --decode)"
+
+            number="$(printf '%s' "$pr" | jq -r '.number')"
+            branch="$(printf '%s' "$pr" | jq -r '.headRefName')"
+            owner="$(printf '%s' "$pr" | jq -r '.headRepositoryOwner.login')"
+            repository="$(printf '%s' "$pr" | jq -r '.headRepository.name')"
+
+            if [[ "$branch" != renovate/* ]]; then
+              continue
+            fi
+
+            if [[ "$owner" != "${{ github.repository_owner }}" ]]; then
+              continue
+            fi
+
+            if [[ "$repository" != "${{ github.event.repository.name }}" ]]; then
+              continue
+            fi
+
+            git fetch origin "$branch"
+
+            git worktree add \
+              "../renovate-pr-$number" \
+              "origin/$branch"
+
+            (
+              cd "../renovate-pr-$number"
+
+              if git diff --quiet \
+                "origin/${{ github.event.repository.default_branch }}...HEAD" \
+                -- cloudflare-mesh/Dockerfile; then
+                exit 0
+              fi
+
+              python3 \
+                "${{ github.workspace }}/.github/scripts/update-renovate-release.py"
+
+              if git diff --quiet; then
+                exit 0
+              fi
+
+              git config user.name "github-actions[bot]"
+              git config user.email \
+                "41898282+github-actions[bot]@users.noreply.github.com"
+
+              git add \
+                cloudflare-mesh/config.yaml \
+                cloudflare-mesh/CHANGELOG.md
+
+              git commit \
+                -m "chore: update app version and changelog"
+
+              git push origin HEAD:"$branch"
+            )
+
+            git worktree remove \
+              --force \
+              "../renovate-pr-$number"
+
+          done < renovate-prs.txt
